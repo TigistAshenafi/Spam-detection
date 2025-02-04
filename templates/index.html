@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Classifier</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        h1 {
+            margin-top: 0;
+            color: #444;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            letter-spacing: -0.5px;
+        }
+        .textarea-wrapper {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            resize: none;
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            background-color: #f9f9f9;
+            color: #333;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            background-color: #ffffff;
+        }
+        textarea::placeholder {
+            color: #aaa;
+        }
+        .textarea-label {
+            position: absolute;
+            left: 1rem;
+            top: 1rem;
+            font-size: 1rem;
+            color: #aaa;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        textarea:focus + .textarea-label,
+        textarea:not(:placeholder-shown) + .textarea-label {
+            transform: translateY(-1.5rem) scale(0.8);
+            color: #667eea;
+            background-color: white;
+            padding: 0 0.5rem;
+        }
+        button {
+            background-color: #667eea;
+            color: white;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        button:hover {
+            background-color: #5a6fd1;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        #result {
+            margin-top: 2rem;
+            font-weight: 500;
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .spam {
+            color: #d32f2f;
+            background-color: #ffebee;
+            border: 1px solid #ffcdd2;
+        }
+        .ham {
+            color: #388e3c;
+            background-color: #e8f5e9;
+            border: 1px solid #c8e6c9;
+        }
+        .error {
+            color: #d32f2f;
+            background-color: #ffebee;
+            border: 1px solid #ffcdd2;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SMS Classifier</h1>
+        <div class="textarea-wrapper">
+            <textarea id="smsInput" rows="4" placeholder=" "></textarea>
+            <label for="smsInput" class="textarea-label">Enter your SMS message here</label>
+        </div>
+        <button onclick="classifySMS()" id="classifyButton">Classify</button>
+        <div id="result"></div>
+    </div>
+    <script>
+        async function classifySMS() {
+            const smsInput = document.getElementById('smsInput');
+            const classifyButton = document.getElementById('classifyButton');
+            const resultDiv = document.getElementById('result');
+            
+            if (!smsInput.value.trim()) {
+                resultDiv.textContent = 'Please enter an SMS message.';
+                resultDiv.className = '';
+                return;
+            }
+
+            classifyButton.disabled = true;
+            classifyButton.textContent = 'Classifying...';
+            resultDiv.textContent = '';
+            resultDiv.className = '';
+            
+            try {
+                const response = await fetch('/classify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ sms: smsInput.value }),
+                });
+
+                if (!response.ok) {
+                    // Handle HTTP errors (e.g., 404, 500)
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to classify SMS. Please try again.');
+                }
+
+                const data = await response.json();
+                const predictionClass = data.prediction === 'spam' ? 'spam' : 'ham';
+                resultDiv.textContent = `Classification: ${data.prediction}`;
+                resultDiv.className = predictionClass;
+            } catch (error) {
+                // Handle network errors or invalid JSON responses
+                console.error('Error:', error);
+                resultDiv.textContent = `Error: ${error.message || 'An unexpected error occurred. Please try again.'}`;
+                resultDiv.className = 'error';
+            } finally {
+                classifyButton.disabled = false;
+                classifyButton.textContent = 'Classify';
+            }
+        }
+    </script>
+</body>
+</html>
