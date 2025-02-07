@@ -44,7 +44,7 @@ Handle class imbalance with techniques like SMOTE if necessary.
 Splitting the testing and training sets.
 
  Model Implementation & training
-I choosehoose the Random Forest classifier and the accuracy = 0.9777.
+I choose the Random Forest classifier and the accuracy = 0.9777.
 Split the dataset into training and testing sets.
 Train the model, using hyperparameter tuning (grid search or randomized search) for optimal performance.
 
