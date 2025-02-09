@@ -24,3 +24,6 @@ Train the model if needed:
 python src/train_model.py
 
 Use the prediction script for message classification:
+python src/predict.py "Your message here"
+
+Deployment url - https://tigist.pythonanywhere.com/
